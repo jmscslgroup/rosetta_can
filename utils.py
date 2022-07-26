@@ -150,7 +150,7 @@ def plotSigs(potentialSignals,mybytes, ID, verbose = 0, save = ''):
         t = [int(i[j[0]:j[1]],2) for i in mybytes]
         try:
             if m == 1:
-                axs[count%3].plot(t,ls='',marker='.',markersize=10,label=label='index ' + str(j[0])+' to ' +str(j[1]))
+                axs[count%3].plot(t,ls='',marker='.',markersize=10,label='index ' + str(j[0])+' to ' +str(j[1]))
                 axs[count%3].legend()
             if m > 1:
                 axs[math.floor(count/3),count%3].plot(t,ls='',marker='.',markersize=10,label='index ' + str(j[0])+' to ' +str(j[1]))
@@ -333,7 +333,7 @@ def bitFlipPlotter(msgId, data, minimum=0, maximum=0, exact=0):
 
     Input: It takes the CANID, the CAN dataframe, and the min,max, exact number of bit flips you're looking for.
     Output: Print of the plotBitSignal function to run which will plot the candidate signal.
-    Plot of the can signals which have close to the same number of bit flips as exact. """"
+    Plot of the can signals which have close to the same number of bit flips as exact. """
     msgs = data.loc[data.MessageID == msgId].dropna()
 
 
