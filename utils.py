@@ -111,7 +111,6 @@ def findNewSignals(data, msgID, removeCounters = True, verbose = False):
                     signals.remove(i)
     return signals,mybytes
 
-
 def signalLocations(IdList,data , verbose = 1):
     """INPUT: List of CANIDs which you want to find some continuous signals, and pandas dataframe to look within.
     OUTPUT: dictionary of possible signal locations."""
@@ -224,9 +223,9 @@ def findRepeatCRC(ID,data):
 def getBitLength(ID,data):
     """Return the bit length of the first data message at the CAN ID
      in the dataframe provided."""
-    if data.loc[data.MessageID == i].MessageLength.unique() > 1:
+    if data.loc[data.MessageID == ID].MessageLength.unique() > 1:
         print("Warning: more than one data length. You are using the first in this list by default: ")
-        print(data.loc[data.MessageID == i].MessageLength.unique())
+        print(data.loc[data.MessageID == ID].MessageLength.unique())
 
     return int(makebits(ID,data).MessageLength.head(1))*8
 
@@ -278,7 +277,9 @@ def make_mybytes(msgID,data):
     return mybytes
 
 def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
-    """This function takes the bit transform of hexadecimal CAN data (see:make_mybytes())
+    """This function takes the bit transform of hexadecimal CAN data (see:make_mybytes()),
+    bit length, and canID as input.
+    Output: plot of bit flips, and list of number of bit flips.
     """
     bf = []
     last = 0 #count can be off because the initial state is 1 instead of 0.
