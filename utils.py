@@ -224,10 +224,8 @@ def getBitLength(ID,data):
     """Return the bit length of the first data message at the CAN ID
      in the dataframe provided."""
     if data.loc[data.MessageID == ID].MessageLength.unique() > 1:
-        print("Warning: more than one data length. You are using the first in this list by default: ")
-        print(data.loc[data.MessageID == ID].MessageLength.unique())
-
-    return int(makebits(ID,data).MessageLength.head(1))*8
+        print("Warning: more than one data length. You are using the first in this complete list by default: ",data.loc[data.MessageID == ID].MessageLength.unique())
+    return int(self.makebits(ID,data).MessageLength.head(1))*8
 
 def plotSignal(ID,data):
     """Plot bit flip plot for specified canID."""
