@@ -72,12 +72,13 @@ def makebits(messageNameID,data):
 
     return messageData
 
-def findNewSignals(data, msgID, removeCounters = True, verbose = False):
+def findNewSignals(data, msgID, removeCounters = True, verbose = False, bitLength = 0):
     """Input: dataframe of can data and a single CAN message ID. Hexadecimal format.
     Output: List of estimated big endian sequntial multi-bit signal positions, and bit transformed input data."""
 
     msgs = data.loc[data.MessageID == msgID].dropna()
-    bitLength = getBitLength(msgID,data)
+    if bitLength == 0:
+        bitLength = getBitLength(msgID,data)
     mybytes = msgs.Message.apply(lambda x: bin(int(x,16))[2:].zfill(int(bitLength)))
     ##this is finding the bit flips per bit position
     bitFlips= bitFlipper(mybytes,bitLength, verbose=verbose)
@@ -281,7 +282,7 @@ def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
     """
     bf = []
     last = 0
-    for i in range(0,len(mybytes.head(int(bitLength)))):
+    for i in range(0,bitLength)):
         count = 0
         for index,byte in enumerate(mybytes):
             now = int(byte[i])
@@ -301,6 +302,8 @@ def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
         pt.title(ID)
 
     return bf
+
+
 
 def findStuffBits(msgId,data, bigEndian = 1):
     """This function will fine stuff bits in a given dataframe at a given CANID.
@@ -369,3 +372,31 @@ def bitFlipPlotter(msgId, data, minimum=0, maximum=0, exact=0):
         for i in range(0,len(bitFlips)):
             if abs(bitFlips[i] - exact) < 3:
                 print("t=plotBitSignal(%d,data,%d) #%d bit flips"%(msgId,i,bitFlips[i]))
+
+def findMovingBits(msgId,data, bigEndian = 1):
+    """This function will find moving bits in a given dataframe at a given CANID.
+    Returns the position of the moving bits from the end of the message."""
+
+    msgs = data.loc[data.MessageID == msgId].dropna()
+    bitLength = data.loc[data.MessageID == msgId].MessageLength.unique()[0]*8
+    mybytes = msgs.Message.apply(lambda x: bin(int(x,16))[2:].zfill(int(bitLength)))
+    mb = [x for x in range(0,len(mybytes.head(int(bitLength))))]
+
+    for row in mybytes[:]:
+        if bigEndian == 1:
+            for i in sb[:-1]:
+                    if row[i] == row[i+1]:
+                        sb.remove(i)
+        else:
+            for i in sb[1:]:
+                if row[i] == row[i-1]:
+                    sb.remove(i)
+
+    if bigEndian==1:
+        sb.remove(bitLength-1)
+    else:
+        sb.remove(0)
+
+    reverse_sb = [bitLength-i for i in sb]
+
+    return reverse_sb
