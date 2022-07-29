@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
+import setuptools
 
 setup(name='rosetta_can',
       version='0.1.1',

@@ -24,7 +24,7 @@ def compareIDs(data1,data2):
     return a-b,b-a,a&b
 
 def printFiles(data_files, labels=[]):
-    """Input: data files which you want to compare the MessageID, HZ, MessageLength, and/or read bus location.
+    """Input: data files, as pandas dataframes, which you want to compare the MessageID, HZ, MessageLength, and/or read bus location.
     Keep in mind that the recorded bus location is totally dependent on the composition of the wiring harness used.
     For recorded data, they have i/o in a pair: Bus 1 is a pair with itself, Bus 0/2 are a pair. """
 
@@ -130,7 +130,7 @@ def signalLocations(IdList,data , verbose = 1):
     return signalsDict
 
 def plotSigs(potentialSignals,mybytes, ID, verbose = 0, save = ''):
-    """INPUT: Potential Signals, output from signalLocations. mybytes is the bit transformed
+    """INPUT: Potential Signals, output from signalLocations function. mybytes is the bit transformed
     version of the CAN data in a pandas dataframe. ID is the CAN ID. verbose will toggle creating the figures at OUTPUT.
     save is a directory location locally to save the output figures, if you want.
 
@@ -223,7 +223,7 @@ def findRepeatCRC(ID,data):
 def getBitLength(ID,data):
     """Return the bit length of the first data message at the CAN ID
      in the dataframe provided."""
-    if data.loc[data.MessageID == ID].MessageLength.unique() > 1:
+    if len(data.loc[data.MessageID == ID].MessageLength.unique()) > 1:
         print("Warning: more than one data length. You are using the first in this complete list by default: ",data.loc[data.MessageID == ID].MessageLength.unique())
     return int(self.makebits(ID,data).MessageLength.head(1))*8
 
@@ -280,11 +280,15 @@ def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
     Output: plot of bit flips, and list of number of bit flips.
     """
     bf = []
-    last = 0 #count can be off because the initial state is 1 instead of 0.
+    last = 0
     for i in range(0,len(mybytes.head(int(bitLength)))):
         count = 0
-        for byte in mybytes:
+        for index,byte in enumerate(mybytes):
             now = int(byte[i])
+            if (index ==0) & (now ==1):
+                last=1
+            elif index == 0:
+                last = 0
             if now != last:
                 count +=1
             last = now
