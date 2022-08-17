@@ -400,3 +400,107 @@ def findMovingBits(msgId,data, bigEndian = 1):
     reverse_sb = [bitLength-i for i in sb]
 
     return reverse_sb
+
+def bitFlipPlotter(msgId, data, minimum=0, maximum=0, exact=0):
+    """This function looks for a binary signal with a specific number of flips
+    in the given dataframe. E.g. I pushed this button 5 times, so there should be 10 or 11 bit flips.
+
+    Input: It takes the CANID, the CAN dataframe, and the min,max, exact number of bit flips you're looking for.
+    Output: Print of the plotBitSignal function to run which will plot the candidate signal.
+    Plot of the can signals which have close to the same number of bit flips as exact. """
+    msgs = data.loc[data.MessageID == msgId].dropna()
+
+
+    bitLength = data.loc[
+        data.MessageID == msgId
+    ].MessageLength.unique()[0]*8
+
+    mybytes = msgs.Message.apply(lambda x: bin(int(x,16))[2:].zfill(int(bitLength)))
+
+    bitFlips = []
+    last = 0
+    for i in range(0,len(mybytes.head(int(bitLength)))):
+        count = 0
+        for byte in mybytes:
+            now = int(byte[i])
+            if now != last:
+                count +=1
+            last = now
+        bitFlips.append(count)
+    if (maximum > 0):
+        for i in range(0,len(bitFlips)):
+            if abs(bitFlips[i] - exact) < 5:
+                pt.plot(bitFlips,label=str(msgId),ls='',marker='.')
+                pt.legend()
+                pt.ylim([minimum, maximum])
+    else:
+        pt.plot(bitFlips)
+
+    if exact > 0:
+        for i in range(0,len(bitFlips)):
+            if abs(bitFlips[i] - exact) < 3:
+                print("t=plotBitSignal(%d,data,%d) #%d bit flips"%(msgId,i,bitFlips[i]))
+
+
+def find_nissan_radar(dist_files):
+    """This function will identify files which have nissan radar data (or not).
+
+    dist_file is a list of filenames."""
+    radar_files = []
+    for f in dist_files:
+        fn = f
+        pattern = ",425,"
+
+        myfile,output = grep_search(pattern,fn)
+        if output!="No Match":
+            radar_files.append(myfile)
+
+    return radar_files
+
+def grep_search(pattern,fn):
+    """Looking for a pattern in file 'fn'."""
+    file = open(fn, "r")
+    match = ''
+    for word in file:
+        if re.search(pattern, word):
+            match = word
+        if match != '':
+            print(fn,match)
+            return fn,match
+            break
+
+    return fn, "No Match"
+def makeNissanRadar(ID,data,db):
+    """make a big dataframe for all the candidate radar signals."""
+
+    sig = db.get_message_by_frame_id(ID)
+    names = [i.name for i in sig.signals]
+    # print(names)
+    cols = ['Time','TrackID']
+    cols = cols + names
+
+    df = pd.DataFrame(columns = cols)
+    temp = pd.DataFrame(columns = cols)
+
+    for i in names:
+        temp[i] = s.convertData(ID,i,data,db).Message
+
+    temp.Time = s.convertData(ID,i,data,db).Time
+    temp.TrackID = ID
+
+    return temp
+def makeAllNissanRadar(data,db):
+    """Using makeNissanRadar, assemble the total radar df."""
+    
+    IDlist=[int(i) for i in list(set(data.MessageID)) if (i >= 381) & (i<=425)]
+    IDlist.pop(IDlist.index(402))
+
+    print(IDlist)
+    a = makeNissanRadar(IDlist[0],data,db)
+    for i in IDlist[1:]:
+        print(i)
+        b = makeNissanRadar(i,data,db)
+
+        a = a.append(b)
+
+    return a
