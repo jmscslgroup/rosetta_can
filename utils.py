@@ -158,10 +158,10 @@ def plotSigs(potentialSignals,mybytes, ID, verbose = 0, save = ''):
         except:
             print('failed on ' + str(ID))
         count +=1
-    if verbose==0:
-        pt.close()
     if save != '':
         pt.savefig(save+'%d.png'%(ID))
+    if verbose==0:
+        pt.close()
 
 def printFlips(ID,data):
     """Print out the bit flips at each bit position for visual inspection.
@@ -170,10 +170,12 @@ def printFlips(ID,data):
     m= makebits(ID,data)
     m_len = getBitLength(ID,data)
     mb = bitFlipper(m.bits,m_len,verbose=1, ID = ID)
+    count = 0
 
     for i in range(0,len(mb)):
         if i%8 == 0:
-            print('NEW BYTE')
+            print('BYTE %d'%(count))
+            count+=1
         print(i,mb[i])
 
 def bitConversion(x):
@@ -235,7 +237,7 @@ def plotSignal(ID,data):
     m_len = getBitLength(ID,data)
     mb = bitFlipper(m.bits,m_len,ID=ID,verbose=1)
 
-def listSet(data,a,b, verbose = 0):
+def uniqueValueSet(data,a,b, verbose = 0):
     """INPUT: CAN data in pandas dataframe, a and b the position of a signal of interest.
     Could be hexadecimal, binary, or other. E.g. data=df.Message, or data=df.bits.
     Must be subscriptable type.
@@ -282,10 +284,13 @@ def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
     """
     bf = []
     last = 0
-    for i in range(0,bitLength)):
+    for i in range(0,bitLength):
         count = 0
         for index,byte in enumerate(mybytes):
-            now = int(byte[i])
+            try:
+                now = int(byte[i])
+            except:
+                pass
             if (index ==0) & (now ==1):
                 last=1
             elif index == 0:
@@ -300,8 +305,11 @@ def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
         pt.xlabel('Bit Position')
         pt.ylabel('Bit Flips')
         pt.title(ID)
-
+        pt.show()
+        pt.close()
     return bf
+
+
 
 
 
@@ -401,46 +409,6 @@ def findMovingBits(msgId,data, bigEndian = 1):
 
     return reverse_sb
 
-def bitFlipPlotter(msgId, data, minimum=0, maximum=0, exact=0):
-    """This function looks for a binary signal with a specific number of flips
-    in the given dataframe. E.g. I pushed this button 5 times, so there should be 10 or 11 bit flips.
-
-    Input: It takes the CANID, the CAN dataframe, and the min,max, exact number of bit flips you're looking for.
-    Output: Print of the plotBitSignal function to run which will plot the candidate signal.
-    Plot of the can signals which have close to the same number of bit flips as exact. """
-    msgs = data.loc[data.MessageID == msgId].dropna()
-
-
-    bitLength = data.loc[
-        data.MessageID == msgId
-    ].MessageLength.unique()[0]*8
-
-    mybytes = msgs.Message.apply(lambda x: bin(int(x,16))[2:].zfill(int(bitLength)))
-
-    bitFlips = []
-    last = 0
-    for i in range(0,len(mybytes.head(int(bitLength)))):
-        count = 0
-        for byte in mybytes:
-            now = int(byte[i])
-            if now != last:
-                count +=1
-            last = now
-        bitFlips.append(count)
-    if (maximum > 0):
-        for i in range(0,len(bitFlips)):
-            if abs(bitFlips[i] - exact) < 5:
-                pt.plot(bitFlips,label=str(msgId),ls='',marker='.')
-                pt.legend()
-                pt.ylim([minimum, maximum])
-    else:
-        pt.plot(bitFlips)
-
-    if exact > 0:
-        for i in range(0,len(bitFlips)):
-            if abs(bitFlips[i] - exact) < 3:
-                print("t=plotBitSignal(%d,data,%d) #%d bit flips"%(msgId,i,bitFlips[i]))
-
 
 def find_nissan_radar(dist_files):
     """This function will identify files which have nissan radar data (or not).
@@ -491,7 +459,7 @@ def makeNissanRadar(ID,data,db):
     return temp
 def makeAllNissanRadar(data,db):
     """Using makeNissanRadar, assemble the total radar df."""
-    
+
     IDlist=[int(i) for i in list(set(data.MessageID)) if (i >= 381) & (i<=425)]
     IDlist.pop(IDlist.index(402))
 
