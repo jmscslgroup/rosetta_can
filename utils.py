@@ -248,7 +248,7 @@ def uniqueValueSet(data,a,b, verbose = 0):
 
     return np.sort(list(set(data.apply(lambda x: x[a:b]))))
 
-def plotBitSignal(msgID, data, index, index_end=0, verbose = 1):
+def plotBitSignal(msgID, data, index, index_end=0, verbose = 1, save=''):
     """Input: CAN message ID, index as a bit position, and data is a pandas dataframe of hexadecimal CAN data (raw from vehicle).
     Optionally, you can add a second index (index_end) to indicate a slice of a bit CAN message.
     OUTPUT: Plot of signal in specified range. List of signal points plotted."""
@@ -261,10 +261,16 @@ def plotBitSignal(msgID, data, index, index_end=0, verbose = 1):
     else:
         t2 = [int(i[start],2) for i in mbits.bits]
     t0 = int(mbits.Time.head(1))
-    if verbose == 1:
-        pt.figure()
-        pt.plot(mbits.Time-t0,t2,markersize=10,label='bit2')
-        pt.title('Unknown Signal: '+str(msgID)+' at index '+str(index))
+
+    fig,ax = pt.subplots()
+    ax.plot(mbits.Time-t0,t2,markersize=10)
+    pt.title('Unknown Signal: '+str(msgID)+' at index '+str(index))
+
+    if save != '':
+        pt.savefig(save+'%d_start-%d_end-%d.png'%(msgID,start,end))
+    if verbose == True:
+        pt.show()
+    pt.close()
 
     return t2
 
@@ -277,7 +283,7 @@ def make_mybytes(msgID,data):
 
     return mybytes
 
-def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
+def bitFlipper(mybytes,bitLength,ID = '',verbose=0, save=''):
     """This function takes the bit transform of hexadecimal CAN data (see:make_mybytes()),
     bit length, and canID as input.
     Output: plot of bit flips, and list of number of bit flips.
@@ -287,6 +293,7 @@ def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
     for i in range(0,bitLength):
         count = 0
         for index,byte in enumerate(mybytes):
+            # print('this row is ',byte)
             try:
                 now = int(byte[i])
             except:
@@ -299,19 +306,20 @@ def bitFlipper(mybytes,bitLength,ID = '',verbose=0):
                 count +=1
             last = now
         bf.append(count)
+
+    fig,ax = pt.subplots()
+    ax.plot(bf)
+    pt.xlabel('Bit Position')
+    pt.ylabel('Bit Flips')
+    pt.title('ID: '+str(ID)+' Length: '+ str(bitLength/8))
+
+    if save != '':
+        pt.savefig(save+'%d_%d.png'%(ID,bitLength/8))
     if verbose == True:
-        pt.figure()
-        pt.plot(bf)
-        pt.xlabel('Bit Position')
-        pt.ylabel('Bit Flips')
-        pt.title(ID)
         pt.show()
-        pt.close()
+    pt.close()
+
     return bf
-
-
-
-
 
 def findStuffBits(msgId,data, bigEndian = 1):
     """This function will fine stuff bits in a given dataframe at a given CANID.
